@@ -2,46 +2,42 @@ import express from 'express';
 import linebot from 'linebot';
 import { Configuration, OpenAIApi } from 'openai';
 
-// LINE Bot設定
+// 環境変数からキー取得
 const bot = linebot({
-  channelId: process.env.LINE_CHANNEL_ID,
+  channelId: process.env.LINE_CHANNEL_ID, // ※なくてもOK
   channelSecret: process.env.LINE_CHANNEL_SECRET,
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN
 });
 
-// OpenAI設定
 const openai = new OpenAIApi(new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
 }));
 
-// Expressサーバー
 const app = express();
-app.use(express.json());
-app.post('/webhook', bot.parser());
 
-// メッセージイベント
+// LINE webhook の受信
 bot.on('message', async (event) => {
-  if (event.message.type !== 'text') return;
-
   try {
-    const gptRes = await openai.createChatCompletion({
+    const userMessage = event.message.text;
+    const gptResponse = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: event.message.text }],
+      messages: [{ role: 'user', content: userMessage }],
     });
-    const replyText = gptRes.data.choices[0].message.content;
-    await event.reply(replyText);
+    const replyText = gptResponse.data.choices[0].message.content;
+    event.reply(replyText);
   } catch (err) {
     console.error(err);
-    await event.reply('エラーが発生しました💦');
+    event.reply('エラーが発生しました');
   }
 });
 
-// 簡単な疎通確認
-app.get('/', (req, res) => {
-  res.send('Hello World from LINE GPT Bot!');
-});
+// Express で webhook を受け取る
+app.post('/webhook', bot.parser());
 
-// Renderはポート番号を process.env.PORT で受ける
+// 動作確認用トップページ
+app.get('/', (req, res) => res.send('Hello World from LINE GPT Bot!'));
+
+// ポート3000 or Render 環境用ポート
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running');
 });
