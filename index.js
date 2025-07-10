@@ -1,6 +1,6 @@
-import express from 'express';
-import linebot from 'linebot';
-import { Configuration, OpenAIApi } from 'openai';
+const express = require('express');
+const linebot = require('linebot');
+const { Configuration, OpenAIApi } = require('openai');
 
 // 環境変数からキー取得
 const bot = linebot({
