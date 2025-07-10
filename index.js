@@ -1,5 +1,5 @@
 import express from 'express';
-const { Configuration, OpenAIApi } = require('openai');
+import { Configuration, OpenAIApi } from 'openai';
 
 const app = express();
 app.use(express.json());
@@ -22,7 +22,6 @@ app.post('/webhook', async (req, res) => {
     const replyText = gptResponse.data.choices[0].message.content;
     console.log('GPT返信:', replyText);
 
-    // 今は console.log だけ。LINE返信はまだ
     res.json({ reply: replyText });
   } catch (err) {
     console.error(err);
