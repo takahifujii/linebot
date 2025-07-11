@@ -1,8 +1,8 @@
 import express from 'express';
-import { Client, middleware as lineMiddleware } from '@line/bot-sdk';
+import { Client, middleware } from '@line/bot-sdk';
 import axios from 'axios';
 
-// LINE BOT の設定
+// LINE Bot 設定
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
   channelSecret: process.env.LINE_CHANNEL_SECRET,
@@ -10,25 +10,6 @@ const config = {
 
 const client = new Client(config);
 const app = express();
-
-// ✅ LINE webhook より前に express.json() を適用しない
-
-// --------------------------
-// LINE の Webhook エンドポイント
-// --------------------------
-app.post('/webhook', lineMiddleware(config), async (req, res) => {
-  try {
-    const results = await Promise.all(req.body.events.map(handleEvent));
-    res.json(results);
-  } catch (err) {
-    console.error(err);
-    res.status(500).end();
-  }
-});
-
-// --------------------------
-// それ以外のルートに JSON ボディパースを適用
-// --------------------------
 app.use(express.json());
 
 // GPT に問い合わせる処理
@@ -38,7 +19,16 @@ async function getGptResponse(message) {
 
   const response = await axios.post(apiUrl, {
     model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: message }],
+    messages: [
+      {
+        role: 'system',
+        content: 'あなたは「ねじーくん」というキャラクターです。語尾に「〜だじ〜」をつけて、明るくフレンドリーな日本語で返答してください。難しい説明も短く簡単に話します。',
+      },
+      {
+        role: 'user',
+        content: message,
+      },
+    ],
   }, {
     headers: { 'Authorization': `Bearer ${apiKey}` },
   });
@@ -46,7 +36,7 @@ async function getGptResponse(message) {
   return response.data.choices[0].message.content;
 }
 
-// LINE のメッセージ処理
+// LINE からのメッセージ処理
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
@@ -61,9 +51,18 @@ async function handleEvent(event) {
   });
 }
 
-// --------------------------
-// 開発・テスト用 GPT 直叩き API
-// --------------------------
+// LINE Webhook エンドポイント
+app.post('/webhook', middleware(config), async (req, res) => {
+  Promise
+    .all(req.body.events.map(handleEvent))
+    .then((result) => res.json(result))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).end();
+    });
+});
+
+// GPT 直叩き用
 app.post('/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -71,18 +70,13 @@ app.post('/chat', async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'エラーだじ～' });
+    res.status(500).json({ error: 'エラーだじ〜' });
   }
 });
 
-// --------------------------
-// テスト用
-// --------------------------
-app.get('/', (req, res) => res.send('Hello World from LINE GPT Bot!'));
+// 動作確認用
+app.get('/', (req, res) => res.send('Hello World from ねじーくん Bot!'));
 
-// --------------------------
-// 起動
-// --------------------------
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running');
 });
