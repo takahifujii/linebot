@@ -15,7 +15,7 @@ bot.on('message', async (event) => {
     const userMessage = event.message.text;
 
     // GPT API サーバーへ問い合わせ
-    const gptResponse = await axios.post('https://linebot-5ufj.onrender.com/chat', {
+    const gptResponse = await axios.post('https://linebot-2-or5k.onrender.com/chat', {
       message: userMessage
     });
 
