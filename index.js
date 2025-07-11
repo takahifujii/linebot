@@ -1,51 +1,35 @@
 import express from 'express';
-import axios from 'axios'; // そのままでOK
+import { Client, middleware } from '@line/bot-sdk';
+import axios from 'axios';
+
+const config = {
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
+};
+const bot = new Client(config);
 
 const app = express();
-app.use(express.json()); // ← JSONボディ受信のために追加
+app.use(express.json());
+app.post('/webhook', middleware(config));  // ← ミドルウェア登録忘れずに！
 
-// GPT API処理（仮で OpenAI API を使う例）
 async function getGptResponse(message) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const apiUrl = 'https://api.openai.com/v1/chat/completions';
-
-  const response = await axios.post(apiUrl, {
-    model: 'gpt-3.5-turbo',
-    messages: [{ role: 'user', content: message }],
-  }, {
-    headers: { 'Authorization': `Bearer ${apiKey}` }
-  });
-
-  return response.data.choices[0].message.content;
+  // ここは今のままでOK
 }
 
-// LINE Bot用 webhook
+// イベント処理
 bot.on('message', async (event) => {
-  try {
-    const userMessage = event.message.text;
-    const reply = await getGptResponse(userMessage);
-    event.reply(reply);
-  } catch (err) {
-    console.error(err);
-    event.reply('エラーが発生したじ～');
-  }
+  const userMessage = event.message.text;
+  const reply = await getGptResponse(userMessage);
+  await event.reply(reply);
 });
 
-// GPT API 直叩き用 (開発/テスト用エンドポイント)
+// GPTテスト用
 app.post('/chat', async (req, res) => {
-  try {
-    const { message } = req.body;
-    const reply = await getGptResponse(message);
-    res.json({ reply });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'エラーだじ～' });
-  }
+  const { message } = req.body;
+  const reply = await getGptResponse(message);
+  res.json({ reply });
 });
 
-// その他
-app.post('/webhook', bot.parser());
-app.get('/', (req, res) => res.send('Hello World from LINE GPT Bot!'));
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running');
 });
