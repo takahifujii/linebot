@@ -17,11 +17,13 @@ const app = express();
 bot.on('message', async (event) => {
   try {
     const userMessage = event.message.text;
-    const gptResponse = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: userMessage }],
-    });
-    const replyText = gptResponse.choices[0].message.content;
+    const axios = require('axios');
+    
+    const gptResponse = await axios.post('https://linebot-5ufj.onrender.com/chat', {
+        message: userMessage
+});
+    const replyText = gptResponse.data.reply;
+
     event.reply(replyText);
   } catch (err) {
     console.error(err);
