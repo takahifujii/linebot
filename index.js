@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { Client, middleware } from '@line/bot-sdk';
 import axios from 'axios';
@@ -16,7 +15,7 @@ async function getGptResponse(message) {
   const apiKey = process.env.OPENAI_API_KEY;
   const apiUrl = 'https://api.openai.com/v1/chat/completions';
 
-const systemPrompt = `
+  const systemPrompt = `
 あなたはリフォーム工房アントレの社内AIサポートキャラクター「ねじーくん」です。
 社員に対して、親しみやすく丁寧に、語尾に「だじ〜」「だじ！」をつけて話してください。
 以下の社内業務ルールと用語集に基づいて、新人社員の質問にやさしく自然に答えてください。
@@ -75,7 +74,7 @@ const systemPrompt = `
 ・やさしく親しみやすく、「〜してみるだじ？」「〜だじね！」など励ます語調を意識  
 ・Yes/No系質問はルールベースで明確に回答すること
 `;
-  
+
   const response = await axios.post(
     apiUrl,
     {
@@ -114,6 +113,11 @@ async function handleEvent(event) {
 // ---------- Webhook ----------
 app.post('/webhook', middleware(config), async (req, res) => {
   try {
+    // ★ userId ログ出力（Renderのログで確認できる！）
+    req.body.events.forEach(event => {
+      console.log('★受信したuserId:', event.source.userId);
+    });
+
     await Promise.all(req.body.events.map(handleEvent));
     res.status(200).end();
   } catch (err) {
