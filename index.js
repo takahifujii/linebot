@@ -152,3 +152,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+// ---------- テスト用ルート ----------
+app.get('/logtest', (req, res) => {
+  console.log('🧪 ログ出力テスト成功！');
+  res.send('ログ出力したよ！');
+});
