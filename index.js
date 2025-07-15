@@ -96,7 +96,10 @@ async function getGptResponse(message) {
 }
 
 // ---------- LINEのメッセージ処理 ----------
+// 🔥 userIdがログに出るように変更したバージョン
 async function handleEvent(event) {
+  console.log('🔥 イベント受信:', JSON.stringify(event, null, 2));  // ← 追加！
+
   if (event.type !== 'message' || event.message.type !== 'text') {
     return Promise.resolve(null);
   }
